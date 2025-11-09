@@ -32,7 +32,7 @@ class CompeticionRepository
             return $result;
         }
         $competiciones = $this->extractor->extractCompeticion($categoria);
-        $this->cache->set($key, json_encode($competiciones), DateInterval::createFromDateString("1 week"));
+        $this->cache->set($key, json_encode($competiciones), DateInterval::createFromDateString("1 hour"));
         return $competiciones;
     }
 }

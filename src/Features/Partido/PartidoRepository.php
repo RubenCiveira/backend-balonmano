@@ -31,7 +31,7 @@ class PartidoRepository
             return $result;
         }
         $categorias = $this->extractor->extractPartidos($jornada);
-        $this->cache->set($key, json_encode($categorias), DateInterval::createFromDateString("1 week"));
+        $this->cache->set($key, json_encode($categorias), DateInterval::createFromDateString("1 hour"));
         return $categorias;
     }
 }

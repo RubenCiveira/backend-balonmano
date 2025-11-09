@@ -32,7 +32,7 @@ class TemporadaRepository {
             return $result;
         }
         $temporadas = $this->extractor->extractTemporadas($territorial, $provincial);;
-        $this->cache->set($key, json_encode($temporadas), DateInterval::createFromDateString("1 week"));
+        $this->cache->set($key, json_encode($temporadas), DateInterval::createFromDateString("1 hour"));
         return $temporadas;
     }
 

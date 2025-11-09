@@ -30,7 +30,7 @@ class FaseRepository
             return $result;
         }
         $categorias = $this->extractor->extractFase($competicion);
-        $this->cache->set($key, json_encode($categorias), DateInterval::createFromDateString("1 week"));
+        $this->cache->set($key, json_encode($categorias), DateInterval::createFromDateString("1 hour"));
         return $categorias;
     }
 }

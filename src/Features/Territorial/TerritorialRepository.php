@@ -29,7 +29,7 @@ class TerritorialRepository
             return $result;
         }
         $temporadas = $this->extractor->extractTerritoriales();
-        $this->cache->set($key, json_encode($temporadas), DateInterval::createFromDateString("1 week"));
+        $this->cache->set($key, json_encode($temporadas), DateInterval::createFromDateString("1 hour"));
         return $temporadas;
     }
 }
