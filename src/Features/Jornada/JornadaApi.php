@@ -1,0 +1,39 @@
+<?php
+
+namespace Civi\Balonmano\Features\Jornada;
+
+use Civi\Balonmano\Features\Categoria\Categoria;
+use Civi\Balonmano\Features\Competicion\Competicion;
+use Civi\Balonmano\Features\Fase\Fase;
+use Civi\Balonmano\Features\Temporada\Temporada;
+use Civi\Balonmano\Features\Territorial\Territorial;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Slim\App;
+
+class JornadaApi
+{
+    public static function register(App $app)
+    {
+        $app->group('/api/territorial/{territorial}/temporada/{temporada}/categoria/{categoria}/competicion/{competicion}/fase/{fase}/jornada', function ($group) {
+            $group->get('', [JornadaApi::class, 'list']);
+        });
+    }
+
+    public function __construct(private readonly JornadaRepository $repository)
+    {
+    }
+
+    public function list(ServerRequestInterface $_request, ResponseInterface $response, array $_args): ResponseInterface
+    {
+        $territorial = new Territorial($_args['territorial'], $_args['territorial']);
+        $temporada = new Temporada($_args['temporada'], $_args['temporada'], $territorial);
+        $categoria = new Categoria($_args['categoria'], $_args['categoria'], $temporada);
+        $competicion = new Competicion($_args['competicion'], $_args['competicion'], $categoria);
+        $fase = new Fase($_args['fase'], $_args['fase'], $competicion);
+        $value = $this->repository->jornadas($fase);
+        $response->getBody()->write(json_encode($value));
+        return $response->withStatus(200)
+          ->withHeader('Content-Type', 'application/json');
+    }
+}
