@@ -20,7 +20,9 @@ use Symfony\Component\HttpClient\HttpClient;
 
 class Extractor
 {
-    public function __construct(private readonly ImageWrapper $imageWrapper) {}
+    public function __construct(private readonly ImageWrapper $imageWrapper)
+    {
+    }
     public function extractClasificacion(Jornada|Fase $filter)
     {
         if ($filter instanceof Jornada) {
@@ -63,6 +65,7 @@ class Extractor
         }
         return $data;
     }
+
     /**
      * @return Temporada[]
      */
@@ -135,7 +138,6 @@ class Extractor
 
     private function extractPartidosPorFase(Fase $fase)
     {
-        $data = [];
         $crawler = $this->crawler("id={$fase->code}", "clasificacion");
         $jid = $crawler->filter('.jornada_actual')->text();
         $jornada = new Jornada($jid, $jid, $fase);
@@ -147,51 +149,56 @@ class Extractor
         $data = [];
         $crawler = $this->crawler("id={$jornada->fase->code}&jornada={$jornada->label}", "competicion");
         $rows = $crawler->filter(".partido");
-        $rows->each(function (Crawler $row) use (&$data, $jornada) {
-            $id = $row->attr('data-id');
-            $territorial = $jornada->territorial();
-            $result = [];
-            $local = true;
-            $equipos = $row->filter('.nombres-equipos a');
-            $equipos->each(function (Crawler $equipo) use (&$result, &$local) {
-                if ($local) {
-                    $result['equipoLocal'] = [ $equipo->text(), base64_encode($equipo->attr('href')) ];
-                } else {
-                    $result['equipoVisitante'] = [ $equipo->text(), base64_encode($equipo->attr('href')) ];
+        if ($rows->count() > 0) {
+            $rows->each(function (Crawler $row) use (&$data, $jornada) {
+                $id = $row->attr('data-id');
+                $territorial = $jornada->territorial();
+                $result = [];
+                $equipos = $row->filter('.nombres-equipos a');
+                $escudos = $row->filter('.escudos-partido img');
+                
+                if( $equipos->count() > 0 && $escudos->count() > 0 ) {
+                    $local = true;
+                    $equipos->each(function (Crawler $equipo) use (&$result, &$local) {
+                        if ($local) {
+                            $result['equipoLocal'] = [ $equipo->text(), base64_encode($equipo->attr('href')) ];
+                        } else {
+                            $result['equipoVisitante'] = [ $equipo->text(), base64_encode($equipo->attr('href')) ];
+                        }
+                        $local = false;
+                    });
+                    $local = true;
+                    $escudos->each(function (Crawler $escudo) use (&$result, &$local) {
+                        if ($local) {
+                            $result['equipoLocal'][] = $this->imageWrapper->publicUrl($escudo->attr('src'));
+                        } else {
+                            $result['equipoVisitante'][] = $this->imageWrapper->publicUrl($escudo->attr('src'));
+                        }
+                        $local = false;
+                    });
+                    $fecha = $row->filter('td:nth-child(3)');
+                    $fecha = $fecha->count() > 0 ? $fecha->text() : false;
+                    $lugar = $row->filter('td:nth-child(4) a');
+                    $data[] = new Partido(
+                        code: $id,
+                        label: $id,
+                        jornada: $jornada,
+                        local: new Equipo($result['equipoLocal'][1], $result['equipoLocal'][0], $territorial, $result['equipoLocal'][2]),
+                        visitante: new Equipo($result['equipoVisitante'][1], $result['equipoVisitante'][0], $territorial, $result['equipoVisitante'][2]),
+                        estado: $row->filter('td:nth-child(5)')->text(),
+                        puntosLocal: intval($row->filter('.col-marcador .local')->text()),
+                        puntosVisitante: intval($row->filter('.col-marcador .visitante')->text()),
+                        fecha: $fecha ? DateTimeImmutable::createFromFormat('d/m/Y H:i', $fecha) : null,
+                        lugar: $lugar && $lugar->count() > 0 ? new Cancha(base64_encode($lugar->attr('onclick')), $lugar->text()) : null
+                    );
                 }
-                $local = false;
             });
-            $local = true;
-            $escudos = $row->filter('.escudos-partido img');
-            $escudos->each(function (Crawler $escudo) use (&$result, &$local) {
-                if ($local) {
-                    $result['equipoLocal'][] = $this->imageWrapper->publicUrl( $escudo->attr('src') );
-                } else {
-                    $result['equipoVisitante'][] = $this->imageWrapper->publicUrl( $escudo->attr('src') );
-                }
-                $local = false;
-            });
-            $fecha = $row->filter('td:nth-child(3)')->text();
-            $lugar = $row->filter('td:nth-child(4) a');
-            $data[] = new Partido(
-                code: $id,
-                label: $id,
-                jornada: $jornada,
-                local: new Equipo($result['equipoLocal'][1], $result['equipoLocal'][0], $territorial, $result['equipoLocal'][2]),
-                visitante: new Equipo($result['equipoVisitante'][1], $result['equipoVisitante'][0], $territorial, $result['equipoVisitante'][2]),
-                estado: $row->filter('td:nth-child(5)')->text(),
-                puntosLocal: intval($row->filter('.col-marcador .local')->text()),
-                puntosVisitante: intval($row->filter('.col-marcador .visitante')->text()),
-                fecha: $fecha ? DateTimeImmutable::createFromFormat('d/m/Y H:i', $fecha) : null,
-                lugar: $lugar ? new Cancha(base64_encode($lugar->attr('onclick')), $lugar->text()) : null
-            );
-        });
+        }
         return $data;
     }
 
     private function extractClasificacionPorFase(Fase $fase)
     {
-        $data = [];
         $crawler = $this->crawler("id={$fase->code}", "clasificacion");
         $jid = $crawler->filter('.jornada_actual')->text();
         $jornada = new Jornada($jid, $jid, $fase);
@@ -203,24 +210,26 @@ class Extractor
         $data = [];
         $crawler = $this->crawler("id={$jornada->fase->code}&jornada={$jornada->label}", "clasificacion");
         $rows = $crawler->filter(".clasificacion tbody tr");
-        $rows->each(function (Crawler $row) use (&$data, $jornada) {
-            $equipo = $row->filter('.nombre-clasi a');
-            $logoEquipo = $this->imageWrapper->publicUrl( $equipo->filter('.image-content img')->attr('src') );
-            $id = $jornada->uid() . "_" . $equipo->text();
-            $data[] = new Clasificacion(
-                code: $id,
-                label: $id,
-                jornada: $jornada,
-                equipo: new Equipo(base64_encode($equipo->attr('href')), $equipo->text(), $jornada->territorial(), $logoEquipo),
-                posicion: intval($row->filter('td:nth-child(1)')->text()),
-                puntos: intval($row->filter('td:nth-child(4)')->text()),
-                ganados: intval($row->filter('td:nth-child(6) a')->text()),
-                empatados: intval($row->filter('td:nth-child(7) a')->text()),
-                perdidos: intval($row->filter('td:nth-child(8) a')->text()),
-                golesMarcados: intval($row->filter('td:nth-child(9)')->text()),
-                golesRecividos: intval($row->filter('td:nth-child(10)')->text()),
-            );
-        });
+        if ($rows->count() > 0) {
+            $rows->each(function (Crawler $row) use (&$data, $jornada) {
+                $equipo = $row->filter('.nombre-clasi a');
+                $logoEquipo = $this->imageWrapper->publicUrl($equipo->filter('.image-content img')->attr('src'));
+                $id = $jornada->uid() . "_" . $equipo->text();
+                $data[] = new Clasificacion(
+                    code: $id,
+                    label: $id,
+                    jornada: $jornada,
+                    equipo: new Equipo(base64_encode($equipo->attr('href')), $equipo->text(), $jornada->territorial(), $logoEquipo),
+                    posicion: intval($row->filter('td:nth-child(1)')->text()),
+                    puntos: intval($row->filter('td:nth-child(4)')->text()),
+                    ganados: intval($row->filter('td:nth-child(6) a')->text()),
+                    empatados: intval($row->filter('td:nth-child(7) a')->text()),
+                    perdidos: intval($row->filter('td:nth-child(8) a')->text()),
+                    golesMarcados: intval($row->filter('td:nth-child(9)')->text()),
+                    golesRecividos: intval($row->filter('td:nth-child(10)')->text()),
+                );
+            });
+        }
         return $data;
     }
 
