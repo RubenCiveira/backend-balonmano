@@ -18,10 +18,26 @@ class JornadaApi
         $app->group('/api/territorial/{territorial}/temporada/{temporada}/categoria/{categoria}/competicion/{competicion}/fase/{fase}/jornada', function ($group) {
             $group->get('', [JornadaApi::class, 'list']);
         });
+        $app->group('/api/territorial/{territorial}/temporada/{temporada}/categoria/{categoria}/competicion/{competicion}/fase/{fase}/jornada-actual', function ($group) {
+            $group->get('', [JornadaApi::class, 'listActual']);
+        });
     }
 
     public function __construct(private readonly JornadaRepository $repository)
     {
+    }
+
+    public function listActual(ServerRequestInterface $_request, ResponseInterface $response, array $_args): ResponseInterface
+    {
+        $territorial = new Territorial($_args['territorial'], $_args['territorial']);
+        $temporada = new Temporada($_args['temporada'], $_args['temporada'], $territorial);
+        $categoria = new Categoria($_args['categoria'], $_args['categoria'], $temporada);
+        $competicion = new Competicion($_args['competicion'], $_args['competicion'], $categoria);
+        $fase = new Fase($_args['fase'], $_args['fase'], $competicion);
+        $value = $this->repository->jornadaActual($fase);
+        $response->getBody()->write(json_encode($value));
+        return $response->withStatus(200)
+          ->withHeader('Content-Type', 'application/json');
     }
 
     public function list(ServerRequestInterface $_request, ResponseInterface $response, array $_args): ResponseInterface

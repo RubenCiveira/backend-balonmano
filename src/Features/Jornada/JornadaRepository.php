@@ -15,6 +15,19 @@ class JornadaRepository
     ) {
 
     }
+
+    public function jornadaActual(Fase $fase): ?Jornada
+    {
+        $key = "jornada_actual_" . $fase->uid();
+        if(  $this->cache->has($key) ) {
+            $all = json_decode($this->cache->get($key), true);
+            return Jornada::from( $all );
+        }
+        $jornada = $this->extractor->extractJornadaActual($fase);
+        $this->cache->set($key, json_encode($jornada), DateInterval::createFromDateString("1 hour"));
+        return $jornada;
+    }
+
     /**
      * @return Jornada[]
      */

@@ -41,6 +41,13 @@ class Extractor
         }
     }
 
+    public function extractJornadaActual(Fase $fase) 
+    {
+        $crawler = $this->crawler("id={$fase->code}", "competicion");
+        $number = $crawler->filter('.jornada_actual')->text();
+        return new Jornada($number, $number, $fase);
+    }
+
     public function extractJornadas(Fase $fase)
     {
         $crawler = $this->crawler("id={$fase->code}", "competicion");
