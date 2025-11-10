@@ -220,7 +220,7 @@ class Extractor
                     code: $id,
                     label: $id,
                     jornada: $jornada,
-                    equipo: new Equipo(base64_encode($equipo->attr('href')), $equipo->text(), $jornada->territorial(), $logoEquipo),
+                    equipo: new Equipo(base64_encode($equipo->attr('href')), preg_replace('/^\d+\s*/', '', $equipo->text()), $jornada->territorial(), $logoEquipo),
                     posicion: intval($row->filter('td:nth-child(1)')->text()),
                     puntos: intval($row->filter('td:nth-child(4)')->text()),
                     ganados: intval($row->filter('td:nth-child(6) a')->text()),
