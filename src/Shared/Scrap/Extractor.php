@@ -150,10 +150,11 @@ class Extractor
         $crawler = $this->crawler("id={$jornada->fase->code}&jornada={$jornada->label}", "competicion");
         $rows = $crawler->filter(".partido");
         if ($rows->count() > 0) {
-            $rows->each(function (Crawler $row) use (&$data, $jornada) {
+            $actual = DateTimeImmutable::createFromFormat('m-d-Y H:i', $crawler->filter(".fecha-jornada-actual")->text() . ' 07:00');
+            $rows->each(function (Crawler $row) use (&$data, $jornada, $actual) {
+                $result = [];
                 $id = $row->attr('data-id');
                 $territorial = $jornada->territorial();
-                $result = [];
                 $equipos = $row->filter('.nombres-equipos a');
                 $escudos = $row->filter('.escudos-partido img');
                 
@@ -188,7 +189,7 @@ class Extractor
                         estado: $row->filter('td:nth-child(5)')->text(),
                         puntosLocal: intval($row->filter('.col-marcador .local')->text()),
                         puntosVisitante: intval($row->filter('.col-marcador .visitante')->text()),
-                        fecha: $fecha ? DateTimeImmutable::createFromFormat('d/m/Y H:i', $fecha) : null,
+                        fecha: $fecha ? DateTimeImmutable::createFromFormat('d/m/Y H:i', $fecha ) : $actual,
                         lugar: $lugar && $lugar->count() > 0 ? new Cancha(base64_encode($lugar->attr('onclick')), $lugar->text()) : null
                     );
                 }

@@ -8,6 +8,7 @@ use Civi\Balonmano\Features\Fase\Fase;
 use Civi\Balonmano\Features\Jornada\Jornada;
 use Civi\Balonmano\Features\Temporada\Temporada;
 use Civi\Balonmano\Features\Territorial\Territorial;
+use DateTime;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Slim\App;
@@ -36,7 +37,11 @@ class PartidoApi
         $competicion = new Competicion($_args['competicion'], $_args['competicion'], $categoria);
         $fase = new Fase($_args['fase'], $_args['fase'], $competicion);
         $jornada = new Jornada($_args['jornada'], $_args['jornada'], $fase);
-        $value = $this->repository->partidos($jornada);
+        $value = array_map( function($row) {
+            $data = get_object_vars( $row );
+            $data['fecha'] = $row->fecha->format(DateTime::ATOM);
+            return $data;
+        }, $this->repository->partidos($jornada) );
         $response->getBody()->write(json_encode($value));
         return $response->withStatus(200)
           ->withHeader('Content-Type', 'application/json');
@@ -48,7 +53,11 @@ class PartidoApi
         $categoria = new Categoria($_args['categoria'], $_args['categoria'], $temporada);
         $competicion = new Competicion($_args['competicion'], $_args['competicion'], $categoria);
         $fase = new Fase($_args['fase'], $_args['fase'], $competicion);
-        $value = $this->repository->partidos($fase);
+        $value = array_map( function($row) {
+            $data = get_object_vars( $row );
+            $data['fecha'] = $row->fecha->format(DateTime::ATOM);
+            return $data;
+        }, $this->repository->partidos($fase));
         $response->getBody()->write(json_encode($value));
         return $response->withStatus(200)
           ->withHeader('Content-Type', 'application/json');
