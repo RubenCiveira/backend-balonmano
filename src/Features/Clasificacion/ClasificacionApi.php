@@ -28,27 +28,27 @@ class ClasificacionApi
     {
     }
 
-    public function listByJornada(ServerRequestInterface $_request, ResponseInterface $response, array $_args): ResponseInterface
+    public function listByJornada(ServerRequestInterface $_request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $territorial = new Territorial($_args['territorial'], $_args['territorial']);
-        $temporada = new Temporada($_args['temporada'], $_args['temporada'], $territorial);
-        $categoria = new Categoria($_args['categoria'], $_args['categoria'], $temporada);
-        $competicion = new Competicion($_args['competicion'], $_args['competicion'], $categoria);
-        $fase = new Fase($_args['fase'], $_args['fase'], $competicion);
-        $jornada = new Jornada($_args['jornada'], $_args['jornada'], $fase);
+        $territorial = new Territorial($args['territorial'], $args['territorial']);
+        $temporada = new Temporada($args['temporada'], $args['temporada'], $territorial);
+        $categoria = new Categoria($args['categoria'], $args['categoria'], $temporada);
+        $competicion = new Competicion($args['competicion'], $args['competicion'], $categoria);
+        $fase = new Fase($args['fase'], $args['fase'], $competicion);
+        $jornada = new Jornada($args['jornada'], $args['jornada'], $fase);
         $value = $this->repository->clasificacion($jornada);
         $response->getBody()->write(json_encode($value));
         return $response->withStatus(200)
           ->withHeader('Content-Type', 'application/json');
     }
 
-    public function listByFase(ServerRequestInterface $_request, ResponseInterface $response, array $_args): ResponseInterface
+    public function listByFase(ServerRequestInterface $_request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $territorial = new Territorial($_args['territorial'], $_args['territorial']);
-        $temporada = new Temporada($_args['temporada'], $_args['temporada'], $territorial);
-        $categoria = new Categoria($_args['categoria'], $_args['categoria'], $temporada);
-        $competicion = new Competicion($_args['competicion'], $_args['competicion'], $categoria);
-        $fase = new Fase($_args['fase'], $_args['fase'], $competicion);
+        $territorial = new Territorial($args['territorial'], $args['territorial']);
+        $temporada = new Temporada($args['temporada'], $args['temporada'], $territorial);
+        $categoria = new Categoria($args['categoria'], $args['categoria'], $temporada);
+        $competicion = new Competicion($args['competicion'], $args['competicion'], $categoria);
+        $fase = new Fase($args['fase'], $args['fase'], $competicion);
         $value = $this->repository->clasificacion($fase);
         $response->getBody()->write(json_encode($value));
         return $response->withStatus(200)

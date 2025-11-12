@@ -15,15 +15,21 @@ class CompeticionRepository
         private readonly Extractor $extractor,
         private readonly FaseRepository $categorias
     ) {
-
     }
+
+    public function clearCache(Categoria $categoria): void
+    {
+        $key = $this->cacheKey($categoria);
+        $this->cache->delete($key);
+    }
+
     /**
      * @return Competicion[]
      */
     public function competiciones(Categoria $categoria): array
     {
-        $key = "competiciones_" . $categoria->uid();
-        if ( $this->cache->has($key)) {
+        $key = $this->cacheKey($categoria);
+        if ($this->cache->has($key)) {
             $all = json_decode($this->cache->get($key), true);
             $result = [];
             foreach ($all as $v) {
@@ -32,7 +38,12 @@ class CompeticionRepository
             return $result;
         }
         $competiciones = $this->extractor->extractCompeticion($categoria);
-        $this->cache->set($key, json_encode($competiciones), DateInterval::createFromDateString("1 hour"));
+        $this->cache->set($key, json_encode($competiciones), DateInterval::createFromDateString("1 week"));
         return $competiciones;
+    }
+
+    public function cacheKey(Categoria $categoria): string
+    {
+        return  "competiciones_" . $categoria->uid();
     }
 }

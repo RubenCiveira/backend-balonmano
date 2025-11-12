@@ -20,9 +20,12 @@ class TemporadaApi
     {
     }
 
-    public function list(ServerRequestInterface $_request, ResponseInterface $response, array $_args): ResponseInterface
+    public function list(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $territorial = new Territorial($_args['territorial'], $_args['territorial']);
+        $territorial = new Territorial($args['territorial'], $args['territorial']);
+        if ('true' === $request->getQueryParams()['refresh']) {
+            $this->repository->clearCache($territorial);
+        }
         $value = $this->repository->temporadas($territorial);
         $response->getBody()->write(json_encode($value));
         return $response->withStatus(200)

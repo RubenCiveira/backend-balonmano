@@ -41,7 +41,7 @@ class Extractor
         }
     }
 
-    public function extractJornadaActual(Fase $fase) 
+    public function extractJornadaActual(Fase $fase)
     {
         $crawler = $this->crawler("id={$fase->code}", "competicion");
         $number = $crawler->filter('.jornada_actual')->text();
@@ -164,8 +164,8 @@ class Extractor
                 $territorial = $jornada->territorial();
                 $equipos = $row->filter('.nombres-equipos a');
                 $escudos = $row->filter('.escudos-partido img');
-                
-                if( $equipos->count() > 0 && $escudos->count() > 0 ) {
+
+                if ($equipos->count() > 0 && $escudos->count() > 0) {
                     $local = true;
                     $equipos->each(function (Crawler $equipo) use (&$result, &$local) {
                         if ($local) {
@@ -196,7 +196,7 @@ class Extractor
                         estado: $row->filter('td:nth-child(5)')->text(),
                         puntosLocal: intval($row->filter('.col-marcador .local')->text()),
                         puntosVisitante: intval($row->filter('.col-marcador .visitante')->text()),
-                        fecha: $fecha ? DateTimeImmutable::createFromFormat('d/m/Y H:i', $fecha ) : $actual,
+                        fecha: $fecha ? DateTimeImmutable::createFromFormat('d/m/Y H:i', $fecha) : $actual,
                         lugar: $lugar && $lugar->count() > 0 ? new Cancha(base64_encode($lugar->attr('onclick')), $lugar->text()) : null
                     );
                 }
@@ -222,12 +222,24 @@ class Extractor
             $rows->each(function (Crawler $row) use (&$data, $jornada) {
                 $equipo = $row->filter('.nombre-clasi a');
                 $logoEquipo = $this->imageWrapper->publicUrl($equipo->filter('.image-content img')->attr('src'));
-                $id = $jornada->uid() . "_" . $equipo->text();
+                $cambio = 0;
+                $nombre = trim( $equipo->text() );
+                if (preg_match('/^\h*([+\-\x{2212}\x{2013}\x{2014}▲▼↑↓]?)\h*(\d+)\h*(.*)$/u', $nombre, $m)) {
+                    [$_all, $signo, $cambio, $nombre] = $m;
+                    // normaliza el signo unicode a '+'/'-'
+                    if ($signo === "\xE2\x88\x92") {
+                        $signo = '-';
+                    } // U+2212
+                    $cambio = trim($signo) . trim($cambio);
+                    // $nombre tiene el texto limpio
+                }
+                $id = $jornada->uid() . "_" . $nombre;
+                //  = preg_replace('/^\d+\s*/', '', $equipo->text());
                 $data[] = new Clasificacion(
                     code: $id,
                     label: $id,
                     jornada: $jornada,
-                    equipo: new Equipo(base64_encode($equipo->attr('href')), preg_replace('/^\d+\s*/', '', $equipo->text()), $jornada->territorial(), $logoEquipo),
+                    equipo: new Equipo(base64_encode($equipo->attr('href')), $nombre, $jornada->territorial(), $logoEquipo),
                     posicion: intval($row->filter('td:nth-child(1)')->text()),
                     puntos: intval($row->filter('td:nth-child(4)')->text()),
                     ganados: intval($row->filter('td:nth-child(6) a')->text()),
@@ -235,6 +247,7 @@ class Extractor
                     perdidos: intval($row->filter('td:nth-child(8) a')->text()),
                     golesMarcados: intval($row->filter('td:nth-child(9)')->text()),
                     golesRecividos: intval($row->filter('td:nth-child(10)')->text()),
+                    diferencia: intval($cambio)
                 );
             });
         }

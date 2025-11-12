@@ -15,12 +15,17 @@ class FaseRepository
     ) {
 
     }
+    public function clearCache(Competicion $competicion): void
+    {
+        $key = $this->cacheKey($competicion);
+        $this->cache->delete($key);
+    }
     /**
      * @return Fase[]
      */
     public function fases(Competicion $competicion): array
     {
-        $key = "fases_" . $competicion->uid();
+        $key = $this->cacheKey($competicion);
         if ($this->cache->has($key)) {
             $all = json_decode($this->cache->get($key), true);
             $result = [];
@@ -30,7 +35,12 @@ class FaseRepository
             return $result;
         }
         $categorias = $this->extractor->extractFase($competicion);
-        $this->cache->set($key, json_encode($categorias), DateInterval::createFromDateString("1 hour"));
+        $this->cache->set($key, json_encode($categorias), DateInterval::createFromDateString("1 week"));
         return $categorias;
+    }
+
+    public function cacheKey(Competicion $competicion): string
+    {
+        return "fases_" . $competicion->uid();
     }
 }

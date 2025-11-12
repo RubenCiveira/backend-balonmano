@@ -2,9 +2,10 @@
 
 namespace Civi\Balonmano\Features\Territorial;
 
+use Slim\App;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Slim\App;
+use Civi\Balonmano\Shared\Rest\CacheResponse;
 
 class TerritorialApi
 {
@@ -15,15 +16,18 @@ class TerritorialApi
         });
     }
 
-    public function __construct(private readonly TerritorialRepository $repository)
+    public function __construct(private readonly TerritorialRepository $repository, private readonly CacheResponse $cache)
     {
     }
 
-    public function list(ServerRequestInterface $_request, ResponseInterface $response, array $_args): ResponseInterface
+    public function list(ServerRequestInterface $request, ResponseInterface $response, array $_args): ResponseInterface
     {
+        if ('true' === $request->getQueryParams()['refresh']) {
+            $this->repository->clearCache();
+        }
         $value = $this->repository->territoriales();
-        $response->getBody()->write(json_encode($value));
-        return $response->withStatus(200)
-          ->withHeader('Content-Type', 'application/json');
+        $body = json_encode($value);
+        $response->getBody()->write($body);
+        return $this->cache->sendJson($request, $response, $value, 3600);
     }
 }

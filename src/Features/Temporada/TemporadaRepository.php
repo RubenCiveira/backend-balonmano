@@ -16,13 +16,18 @@ class TemporadaRepository {
         private readonly Extractor $extractor,
         private readonly CategoriaRepository $categorias
     ) {
-
     }
+
+    public function clearCache(Territorial $territorial, ?Provincial $provincial = null): void {
+        $key = $this->cacheKey($territorial, $provincial);
+        $this->cache->delete( $key );
+    }
+
     /**
      * @return Temporada[]
      */
     public function temporadas(Territorial $territorial, ?Provincial $provincial = null): array {
-        $key = "temporadas_" . $territorial->code;
+        $key = $this->cacheKey($territorial, $provincial);
         if(  $this->cache->has($key) ) {
             $all = json_decode($this->cache->get($key), true);
             $result = [];
@@ -32,7 +37,7 @@ class TemporadaRepository {
             return $result;
         }
         $temporadas = $this->extractor->extractTemporadas($territorial, $provincial);;
-        $this->cache->set($key, json_encode($temporadas), DateInterval::createFromDateString("1 hour"));
+        $this->cache->set($key, json_encode($temporadas), DateInterval::createFromDateString("1 week"));
         return $temporadas;
     }
 
@@ -41,5 +46,9 @@ class TemporadaRepository {
      */
     public function categorias(Temporada $temporada): array {
         return $this->categorias->categorias( $temporada );
+    }
+
+    private function cacheKey(Territorial $territorial, ?Provincial $provincial = null): string {
+        return "temporadas_" . $territorial->code;
     }
 }

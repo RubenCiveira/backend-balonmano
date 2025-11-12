@@ -14,15 +14,15 @@ class ClasificacionRepository
         private readonly CacheInterface $cache,
         private readonly Extractor $extractor
     ) {
-
     }
+
     /**
      * @return Clasificacion[]
      */
     public function clasificacion(Jornada|Fase $jornada): array
     {
         $key = "clasificaciones_" . $jornada->uid();
-        if ( $this->cache->has($key)) {
+        if (false && $this->cache->has($key)) {
             $all = json_decode($this->cache->get($key), true);
             $result = [];
             foreach ($all as $v) {
@@ -31,7 +31,7 @@ class ClasificacionRepository
             return $result;
         }
         $categorias = $this->extractor->extractClasificacion($jornada);
-        $this->cache->set($key, json_encode($categorias), DateInterval::createFromDateString("1 hour"));
+        $this->cache->set($key, json_encode($categorias), DateInterval::createFromDateString("4 hour"));
         return $categorias;
     }
 }

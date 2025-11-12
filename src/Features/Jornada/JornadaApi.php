@@ -27,26 +27,29 @@ class JornadaApi
     {
     }
 
-    public function listActual(ServerRequestInterface $_request, ResponseInterface $response, array $_args): ResponseInterface
+    public function listActual(ServerRequestInterface $_request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $territorial = new Territorial($_args['territorial'], $_args['territorial']);
-        $temporada = new Temporada($_args['temporada'], $_args['temporada'], $territorial);
-        $categoria = new Categoria($_args['categoria'], $_args['categoria'], $temporada);
-        $competicion = new Competicion($_args['competicion'], $_args['competicion'], $categoria);
-        $fase = new Fase($_args['fase'], $_args['fase'], $competicion);
+        $territorial = new Territorial($args['territorial'], $args['territorial']);
+        $temporada = new Temporada($args['temporada'], $args['temporada'], $territorial);
+        $categoria = new Categoria($args['categoria'], $args['categoria'], $temporada);
+        $competicion = new Competicion($args['competicion'], $args['competicion'], $categoria);
+        $fase = new Fase($args['fase'], $args['fase'], $competicion);
         $value = $this->repository->jornadaActual($fase);
         $response->getBody()->write(json_encode($value));
         return $response->withStatus(200)
           ->withHeader('Content-Type', 'application/json');
     }
 
-    public function list(ServerRequestInterface $_request, ResponseInterface $response, array $_args): ResponseInterface
+    public function list(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $territorial = new Territorial($_args['territorial'], $_args['territorial']);
-        $temporada = new Temporada($_args['temporada'], $_args['temporada'], $territorial);
-        $categoria = new Categoria($_args['categoria'], $_args['categoria'], $temporada);
-        $competicion = new Competicion($_args['competicion'], $_args['competicion'], $categoria);
-        $fase = new Fase($_args['fase'], $_args['fase'], $competicion);
+        $territorial = new Territorial($args['territorial'], $args['territorial']);
+        $temporada = new Temporada($args['temporada'], $args['temporada'], $territorial);
+        $categoria = new Categoria($args['categoria'], $args['categoria'], $temporada);
+        $competicion = new Competicion($args['competicion'], $args['competicion'], $categoria);
+        $fase = new Fase($args['fase'], $args['fase'], $competicion);
+        if ('true' === $request->getQueryParams()['refresh']) {
+            $this->repository->clearCache($fase);
+        }
         $value = $this->repository->jornadas($fase);
         $response->getBody()->write(json_encode($value));
         return $response->withStatus(200)

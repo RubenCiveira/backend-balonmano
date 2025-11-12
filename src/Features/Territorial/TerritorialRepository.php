@@ -12,14 +12,19 @@ class TerritorialRepository
         private readonly CacheInterface $cache,
         private readonly Extractor $extractor,
     ) {
-
     }
+
+    public function clearCache(): void {
+        $key = $this->cacheKey();
+        $this->cache->delete( $key );
+    }
+
     /**
      * @return Territorial[]
      */
     public function territoriales(): array
     {
-        $key = "territoriales";
+        $key = $this->cacheKey();
         if ($this->cache->has($key)) {
             $all = json_decode($this->cache->get($key), true);
             $result = [];
@@ -29,7 +34,11 @@ class TerritorialRepository
             return $result;
         }
         $temporadas = $this->extractor->extractTerritoriales();
-        $this->cache->set($key, json_encode($temporadas), DateInterval::createFromDateString("1 hour"));
+        $this->cache->set($key, json_encode($temporadas), DateInterval::createFromDateString("1 week"));
         return $temporadas;
+    }
+
+    private function cacheKey(): string {
+        return "territoriales";
     }
 }

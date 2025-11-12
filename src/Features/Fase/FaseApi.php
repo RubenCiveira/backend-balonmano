@@ -23,12 +23,15 @@ class FaseApi
     {
     }
 
-    public function list(ServerRequestInterface $_request, ResponseInterface $response, array $_args): ResponseInterface
+    public function list(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $territorial = new Territorial($_args['territorial'], $_args['territorial']);
-        $temporada = new Temporada($_args['temporada'], $_args['temporada'], $territorial);
-        $categoria = new Categoria($_args['categoria'], $_args['categoria'], $temporada);
-        $competicion = new Competicion($_args['competicion'], $_args['competicion'], $categoria);
+        $territorial = new Territorial($args['territorial'], $args['territorial']);
+        $temporada = new Temporada($args['temporada'], $args['temporada'], $territorial);
+        $categoria = new Categoria($args['categoria'], $args['categoria'], $temporada);
+        $competicion = new Competicion($args['competicion'], $args['competicion'], $categoria);
+        if ('true' === $request->getQueryParams()['refresh']) {
+            $this->repository->clearCache($competicion);
+        }
         $value = $this->repository->fases($competicion);
         $response->getBody()->write(json_encode($value));
         return $response->withStatus(200)

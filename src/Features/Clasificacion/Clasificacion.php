@@ -21,6 +21,7 @@ class Clasificacion
             $data['empatados'],
             $data['golesMarcados'],
             $data['golesRecividos'],
+            $data['diferencia']
             
         );
     }
@@ -36,6 +37,7 @@ class Clasificacion
         public readonly int $perdidos,
         public readonly int $golesMarcados,
         public readonly int $golesRecividos,
+        public readonly ?int $diferencia
     ) {
     }
 
