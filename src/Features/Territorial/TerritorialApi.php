@@ -22,12 +22,10 @@ class TerritorialApi
 
     public function list(ServerRequestInterface $request, ResponseInterface $response, array $_args): ResponseInterface
     {
-        if ('true' === $request->getQueryParams()['refresh']) {
+        if ( $this->cache->askToRefresh( $request) ) {
             $this->repository->clearCache();
         }
         $value = $this->repository->territoriales();
-        $body = json_encode($value);
-        $response->getBody()->write($body);
-        return $this->cache->sendJson($request, $response, $value, 3600);
+        return $this->cache->sendJson($request, $response, $value, 36_000);
     }
 }

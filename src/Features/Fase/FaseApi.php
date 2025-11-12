@@ -6,6 +6,7 @@ use Civi\Balonmano\Features\Categoria\Categoria;
 use Civi\Balonmano\Features\Competicion\Competicion;
 use Civi\Balonmano\Features\Temporada\Temporada;
 use Civi\Balonmano\Features\Territorial\Territorial;
+use Civi\Balonmano\Shared\Rest\CacheResponse;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Slim\App;
@@ -19,7 +20,7 @@ class FaseApi
         });
     }
 
-    public function __construct(private readonly FaseRepository $repository)
+    public function __construct(private readonly FaseRepository $repository, private readonly CacheResponse $cache)
     {
     }
 
@@ -29,12 +30,10 @@ class FaseApi
         $temporada = new Temporada($args['temporada'], $args['temporada'], $territorial);
         $categoria = new Categoria($args['categoria'], $args['categoria'], $temporada);
         $competicion = new Competicion($args['competicion'], $args['competicion'], $categoria);
-        if ('true' === $request->getQueryParams()['refresh']) {
+        if ( $this->cache->askToRefresh( $request) ) {
             $this->repository->clearCache($competicion);
         }
         $value = $this->repository->fases($competicion);
-        $response->getBody()->write(json_encode($value));
-        return $response->withStatus(200)
-          ->withHeader('Content-Type', 'application/json');
+        return $this->cache->sendJson($request, $response, $value, 36_000);
     }
 }

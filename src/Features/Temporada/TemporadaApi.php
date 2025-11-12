@@ -3,6 +3,7 @@
 namespace Civi\Balonmano\Features\Temporada;
 
 use Civi\Balonmano\Features\Territorial\Territorial;
+use Civi\Balonmano\Shared\Rest\CacheResponse;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Slim\App;
@@ -16,19 +17,17 @@ class TemporadaApi
         });
     }
 
-    public function __construct(private readonly TemporadaRepository $repository)
+    public function __construct(private readonly TemporadaRepository $repository, private readonly CacheResponse $cache)
     {
     }
 
     public function list(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $territorial = new Territorial($args['territorial'], $args['territorial']);
-        if ('true' === $request->getQueryParams()['refresh']) {
+        if ( $this->cache->askToRefresh( $request) ) {
             $this->repository->clearCache($territorial);
         }
         $value = $this->repository->temporadas($territorial);
-        $response->getBody()->write(json_encode($value));
-        return $response->withStatus(200)
-          ->withHeader('Content-Type', 'application/json');
+        return $this->cache->sendJson($request, $response, $value, 36_000);
     }
 }

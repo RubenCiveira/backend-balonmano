@@ -7,6 +7,10 @@ use Psr\Http\Message\ServerRequestInterface;
 
 class CacheResponse
 {
+    public function askToRefresh(ServerRequestInterface $request) {
+        $params = $request->getQueryParams();
+        return isset($params['refresh']) && $params['refresh'] === 'true';
+    }
     public function sendJson(
         ServerRequestInterface $request,
         ResponseInterface $response,
@@ -16,8 +20,8 @@ class CacheResponse
         $body = json_encode($value);
         $etag = '"' . sha1($body) . '"';
         $ifNoneMatch = $request->getHeaderLine('If-None-Match');
+        $cacheControl = sprintf('public, max-age=%d, stale-while-revalidate=30', $maxAgeSeconds);
         if ($ifNoneMatch !== '' && $this->matchEtags($ifNoneMatch, $etag)) {
-            $cacheControl = sprintf('public, max-age=%d, stale-while-revalidate=30', $maxAgeSeconds);
             return $response
                         ->withStatus(304)
                         ->withHeader('ETag', $etag)
@@ -25,7 +29,6 @@ class CacheResponse
                         ->withHeader('Vary', 'Accept-Encoding'); // añade más si procede (Authorization, Accept, etc.)
         } else {
             $response->getBody()->write($body);
-            $cacheControl = sprintf('public, max-age=%d, stale-while-revalidate=30', $maxAgeSeconds);
             return $response
                         ->withStatus(200)
                         ->withHeader('ETag', $etag)

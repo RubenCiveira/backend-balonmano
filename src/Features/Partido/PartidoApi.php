@@ -8,6 +8,7 @@ use Civi\Balonmano\Features\Fase\Fase;
 use Civi\Balonmano\Features\Jornada\Jornada;
 use Civi\Balonmano\Features\Temporada\Temporada;
 use Civi\Balonmano\Features\Territorial\Territorial;
+use Civi\Balonmano\Shared\Rest\CacheResponse;
 use DateTime;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -25,11 +26,11 @@ class PartidoApi
         });
     }
 
-    public function __construct(private readonly PartidoRepository $repository)
+    public function __construct(private readonly PartidoRepository $repository, private readonly CacheResponse $cache)
     {
     }
 
-    public function listByJornada(ServerRequestInterface $_request, ResponseInterface $response, array $_args): ResponseInterface
+    public function listByJornada(ServerRequestInterface $request, ResponseInterface $response, array $_args): ResponseInterface
     {
         $territorial = new Territorial($_args['territorial'], $_args['territorial']);
         $temporada = new Temporada($_args['temporada'], $_args['temporada'], $territorial);
@@ -42,11 +43,9 @@ class PartidoApi
             $data['fecha'] = $row->fecha->format(DateTime::ATOM);
             return $data;
         }, $this->repository->partidos($jornada) );
-        $response->getBody()->write(json_encode($value));
-        return $response->withStatus(200)
-          ->withHeader('Content-Type', 'application/json');
+        return $this->cache->sendJson($request, $response, $value, 3_600);
     }
-    public function listByFase(ServerRequestInterface $_request, ResponseInterface $response, array $_args): ResponseInterface
+    public function listByFase(ServerRequestInterface $request, ResponseInterface $response, array $_args): ResponseInterface
     {
         $territorial = new Territorial($_args['territorial'], $_args['territorial']);
         $temporada = new Temporada($_args['temporada'], $_args['temporada'], $territorial);
@@ -58,8 +57,6 @@ class PartidoApi
             $data['fecha'] = $row->fecha->format(DateTime::ATOM);
             return $data;
         }, $this->repository->partidos($fase));
-        $response->getBody()->write(json_encode($value));
-        return $response->withStatus(200)
-          ->withHeader('Content-Type', 'application/json');
+        return $this->cache->sendJson($request, $response, $value, 3_600);
     }
 }

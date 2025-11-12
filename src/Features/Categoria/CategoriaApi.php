@@ -4,6 +4,7 @@ namespace Civi\Balonmano\Features\Categoria;
 
 use Civi\Balonmano\Features\Temporada\Temporada;
 use Civi\Balonmano\Features\Territorial\Territorial;
+use Civi\Balonmano\Shared\Rest\CacheResponse;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Slim\App;
@@ -17,7 +18,7 @@ class CategoriaApi
         });
     }
 
-    public function __construct(private readonly CategoriaRepository $repository)
+    public function __construct(private readonly CategoriaRepository $repository, private readonly CacheResponse $cache)
     {
     }
 
@@ -25,12 +26,10 @@ class CategoriaApi
     {
         $territorial = new Territorial($args['territorial'], $args['territorial']);
         $temporada = new Temporada($args['temporada'], $args['temporada'], $territorial);
-        if ('true' === $request->getQueryParams()['refresh']) {
+        if ( $this->cache->askToRefresh( $request) ) {
             $this->repository->clearCache($temporada);
         }
         $value = $this->repository->categorias($temporada);
-        $response->getBody()->write(json_encode($value));
-        return $response->withStatus(200)
-          ->withHeader('Content-Type', 'application/json');
+        return $this->cache->sendJson($request, $response, $value, 36_000);
     }
 }
