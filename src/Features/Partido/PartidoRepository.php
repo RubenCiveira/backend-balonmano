@@ -22,7 +22,7 @@ class PartidoRepository
     public function partidos(Jornada|Fase $jornada): array
     {
         $key = "partidos_" . $jornada->uid();
-        if (false && $this->cache->has($key)) {
+        if ($this->cache->has($key)) {
             $all = json_decode($this->cache->get($key), true);
             $result = [];
             foreach ($all as $v) {
