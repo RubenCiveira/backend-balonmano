@@ -33,6 +33,8 @@ class Extractor
         $query = base64_decode($equipo->code);
         // $crawler = $this->crawler($query, "equipo");
         $crawler = $this->crawFormUrl("https://resultadosbalonmano.isquad.es/" . $query);
+        $logo = $this->imageWrapper->publicUrl($crawler->filter('.content-body .logo img')->attr('src'));
+        $nombre = $crawler->filter('.content-body .centrado')->text();
         $telefono = $crawler->filter('.telefono .etiqueta_negra')->text();
         $email = $crawler->filter('.email .etiqueta_negra')->text();
         $responsable = $crawler->filter('.responsable .etiqueta_negra')->text();
@@ -68,8 +70,8 @@ class Extractor
         });
         return new DetalleEquipo(
             code: $equipo->code, 
-            label: $equipo->label,
-            logo: $equipo->logo,
+            label: $nombre,
+            logo: $logo,
             telefono: $telefono,
             email: $email,
             responsable: $responsable,
