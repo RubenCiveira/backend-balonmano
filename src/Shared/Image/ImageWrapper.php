@@ -79,6 +79,9 @@ class ImageWrapper
 
         // 5) Calcular tamaño destino (máx 120x120 manteniendo proporción)
         $max = 120;
+        if( strpos($url, '/afiliacion/') ) {
+            $max = 150;
+        }
         $scale = min($max / $srcW, $max / $srcH, 1); // no ampliar si es más pequeña
         $dstW = (int) floor($srcW * $scale);
         $dstH = (int) floor($srcH * $scale);

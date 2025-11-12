@@ -69,7 +69,6 @@ class Extractor
         return new DetalleEquipo(
             code: $equipo->code, 
             label: $equipo->label,
-            fase: $equipo->fase,
             logo: $equipo->logo,
             telefono: $telefono,
             email: $email,

@@ -24,7 +24,6 @@ class DetalleEquipo
         return new DetalleEquipo(
             $data['code'],
             $data['label'],
-            Fase::from($data['fase']),
             $data['logo'],
             $data['telefono'],
             $data['email'],
@@ -39,7 +38,6 @@ class DetalleEquipo
     public function __construct(
         public readonly string $code,
         public readonly string $label,
-        public readonly Fase $fase,
         public readonly string $logo,
         public readonly ?string $telefono = null,
         public readonly ?string $email = null,

@@ -28,12 +28,7 @@ class EquipoApi
     public function retrieve(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $codigo = $args['codigo'];
-        $territorial = new Territorial($args['territorial'], $args['territorial']);
-        $temporada = new Temporada($args['temporada'], $args['temporada'], $territorial);
-        $categoria = new Categoria($args['categoria'], $args['categoria'], $temporada);
-        $competicion = new Competicion($args['competicion'], $args['competicion'], $categoria);
-        $fase = new Fase($args['fase'], $args['fase'], $competicion);
-        $equipo = new Equipo(code: $codigo, label: $codigo, fase: $fase, logo: $codigo);
+        $equipo = new Equipo(code: $codigo, label: $codigo, logo: $codigo);
         if ( $this->cache->askToRefresh( $request) ) {
             $this->repository->clearCache($equipo);
         }
