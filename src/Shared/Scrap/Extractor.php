@@ -157,7 +157,8 @@ class Extractor
         $crawler = $this->crawler("id={$jornada->fase->code}&jornada={$jornada->label}", "competicion");
         $rows = $crawler->filter(".partido");
         if ($rows->count() > 0) {
-            $actual = DateTimeImmutable::createFromFormat('m-d-Y H:i', $crawler->filter(".fecha-jornada-actual")->text() . ' 07:00');
+            $actual = DateTimeImmutable::createFromFormat('d-m-Y H:i', $crawler->filter(".fecha-jornada-actual")->text() . ' 07:00');
+
             $rows->each(function (Crawler $row) use (&$data, $jornada, $actual) {
                 $result = [];
                 $id = $row->attr('data-id');
