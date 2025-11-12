@@ -15,7 +15,6 @@ class Partido
         return new Partido(
             $data['code'],
             $data['label'],
-            Jornada::from($data['jornada']),
             Equipo::from($data['local']),
             Equipo::from($data['visitante']),
             $data['estado'],
@@ -28,7 +27,6 @@ class Partido
     public function __construct(
         public readonly string $code,
         public readonly string $label,
-        public readonly Jornada $jornada,
         public readonly Equipo $local,
         public readonly Equipo $visitante,
         public readonly string $estado,
@@ -46,7 +44,8 @@ class Partido
 
     public function uid()
     {
-        return $this->jornada->uid() . "_" . $this->code;
+        // return $this->jornada->uid() . "_" . $this->code;
+        return $this->code;
     }
 
     private static function dateTimeFromPhpJson(array $obj): ?DateTimeImmutable

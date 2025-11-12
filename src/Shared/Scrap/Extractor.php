@@ -7,7 +7,11 @@ use Civi\Balonmano\Features\Cancha\Cancha;
 use Civi\Balonmano\Features\Categoria\Categoria;
 use Civi\Balonmano\Features\Clasificacion\Clasificacion;
 use Civi\Balonmano\Features\Competicion\Competicion;
+use Civi\Balonmano\Features\Equipo\DetalleEquipo;
 use Civi\Balonmano\Features\Equipo\Equipo;
+use Civi\Balonmano\Features\Equipo\Inscrito;
+use Civi\Balonmano\Features\Equipo\Invitado;
+use Civi\Balonmano\Features\Equipo\Personal;
 use Civi\Balonmano\Features\Fase\Fase;
 use Civi\Balonmano\Features\Jornada\Jornada;
 use Civi\Balonmano\Features\Partido\Partido;
@@ -23,6 +27,61 @@ class Extractor
     public function __construct(private readonly ImageWrapper $imageWrapper)
     {
     }
+
+    public function extractDetallesEquipo(Equipo $equipo): DetalleEquipo
+    {
+        $query = base64_decode($equipo->code);
+        // $crawler = $this->crawler($query, "equipo");
+        $crawler = $this->crawFormUrl("https://resultadosbalonmano.isquad.es/" . $query);
+        $telefono = $crawler->filter('.telefono .etiqueta_negra')->text();
+        $email = $crawler->filter('.email .etiqueta_negra')->text();
+        $responsable = $crawler->filter('.responsable .etiqueta_negra')->text();
+        $pabellon = $crawler->filter('.pabellon .etiqueta_negra')->text();
+        $club  = $crawler->filter('.pertenece .pertenece-nombre')->text();
+        $plantilla = $crawler->filter('.tabla-plantilla tr');
+        // $fecha = $row->filter('td:nth-child(3)');
+        $jugadores = [];
+        $invitados = [];
+        $tecnicos = [];
+        $plantilla->each(function (Crawler $row) use (&$jugadores, &$invitados, &$tecnicos) {
+            if( $row->filter('td:nth-child(1)')->count() > 0 
+                            && $row->filter('td:nth-child(2)')->count() > 0
+                            && $row->filter('td:nth-child(3)')->count() > 0
+                            && $row->filter('td:nth-child(4)')->count() > 0
+                            && $row->filter('td:nth-child(5)')->count() > 0 ) {
+                $nombre = $row->filter('td:nth-child(1)')->text();
+                if( 'JUGADORES' !== $nombre ) {
+                    $categoria = $row->filter('td:nth-child(2)')->text();
+                    $edad = $row->filter('td:nth-child(3)')->text();
+                    $goles = $row->filter('td:nth-child(4)')->text();
+                    $baja = $row->filter('td:nth-child(5)')->text();
+                    $foto = $this->imageWrapper->publicUrl( $row->filter('td:nth-child(1) img')->attr('src') );
+                    if( 'Jugador' === $categoria ) {
+                        $jugadores[] = new Inscrito( $nombre, intval($goles), intval($edad), $foto, $baja);
+                    } else if( 'Invitado' === $categoria ) {
+                         $invitados[] = new Invitado( $nombre, intval($goles), intval($edad), $foto, $baja);
+                    } else if( $categoria ) {
+                         $tecnicos[] = new Personal( $nombre, intval($edad), $foto, $baja);
+                    }
+                }
+            }
+        });
+        return new DetalleEquipo(
+            code: $equipo->code, 
+            label: $equipo->label,
+            fase: $equipo->fase,
+            logo: $equipo->logo,
+            telefono: $telefono,
+            email: $email,
+            responsable: $responsable,
+            cancha: $pabellon,
+            club: $club,
+            personal: $tecnicos,
+            jugadores: $jugadores,
+            invitados: $invitados,
+        );
+    }
+
     public function extractClasificacion(Jornada|Fase $filter)
     {
         if ($filter instanceof Jornada) {
@@ -162,7 +221,6 @@ class Extractor
             $rows->each(function (Crawler $row) use (&$data, $jornada, $actual) {
                 $result = [];
                 $id = $row->attr('data-id');
-                $territorial = $jornada->territorial();
                 $equipos = $row->filter('.nombres-equipos a');
                 $escudos = $row->filter('.escudos-partido img');
 
@@ -191,9 +249,10 @@ class Extractor
                     $data[] = new Partido(
                         code: $id,
                         label: $id,
-                        jornada: $jornada,
-                        local: new Equipo($result['equipoLocal'][1], $result['equipoLocal'][0], $territorial, $result['equipoLocal'][2]),
-                        visitante: new Equipo($result['equipoVisitante'][1], $result['equipoVisitante'][0], $territorial, $result['equipoVisitante'][2]),
+                        local: new Equipo($result['equipoLocal'][1], $result['equipoLocal'][0], 
+                            $result['equipoLocal'][2]),
+                        visitante: new Equipo($result['equipoVisitante'][1], $result['equipoVisitante'][0], 
+                            $result['equipoVisitante'][2]),
                         estado: $row->filter('td:nth-child(5)')->text(),
                         puntosLocal: intval($row->filter('.col-marcador .local')->text()),
                         puntosVisitante: intval($row->filter('.col-marcador .visitante')->text()),
@@ -224,7 +283,7 @@ class Extractor
                 $equipo = $row->filter('.nombre-clasi a');
                 $logoEquipo = $this->imageWrapper->publicUrl($equipo->filter('.image-content img')->attr('src'));
                 $cambio = 0;
-                $nombre = trim( $equipo->text() );
+                $nombre = trim($equipo->text());
                 if (preg_match('/^\h*([+\-\x{2212}\x{2013}\x{2014}▲▼↑↓]?)\h*(\d+)\h*(.*)$/u', $nombre, $m)) {
                     [$_all, $signo, $cambio, $nombre] = $m;
                     // normaliza el signo unicode a '+'/'-'
@@ -232,15 +291,13 @@ class Extractor
                         $signo = '-';
                     } // U+2212
                     $cambio = trim($signo) . trim($cambio);
-                    // $nombre tiene el texto limpio
                 }
                 $id = $jornada->uid() . "_" . $nombre;
-                //  = preg_replace('/^\d+\s*/', '', $equipo->text());
                 $data[] = new Clasificacion(
                     code: $id,
                     label: $id,
-                    jornada: $jornada,
-                    equipo: new Equipo(base64_encode($equipo->attr('href')), $nombre, $jornada->territorial(), $logoEquipo),
+                    equipo: new Equipo(base64_encode($equipo->attr('href')), $nombre, 
+                        $logoEquipo),
                     posicion: intval($row->filter('td:nth-child(1)')->text()),
                     puntos: intval($row->filter('td:nth-child(4)')->text()),
                     ganados: intval($row->filter('td:nth-child(6) a')->text()),

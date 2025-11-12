@@ -3,6 +3,7 @@
 namespace Civi\Balonmano\Features\Fase;
 
 use Civi\Balonmano\Features\Competicion\Competicion;
+use Civi\Balonmano\Features\Temporada\Temporada;
 use Civi\Balonmano\Features\Territorial\Territorial;
 
 class Fase
@@ -20,6 +21,11 @@ class Fase
         public readonly string $label,
         public readonly Competicion $competicion
     ) {
+    }
+
+    public function temporada(): Temporada
+    {
+        return $this->competicion->temporada();
     }
 
     public function territorial(): Territorial

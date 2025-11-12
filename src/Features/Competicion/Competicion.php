@@ -3,6 +3,7 @@
 namespace Civi\Balonmano\Features\Competicion;
 
 use Civi\Balonmano\Features\Categoria\Categoria;
+use Civi\Balonmano\Features\Temporada\Temporada;
 use Civi\Balonmano\Features\Territorial\Territorial;
 
 class Competicion
@@ -21,6 +22,12 @@ class Competicion
         public readonly Categoria $categoria
     ) {
     }
+
+    public function temporada(): Temporada
+    {
+        return $this->categoria->temporada;
+    }
+
 
     public function territorial(): Territorial
     {

@@ -2,7 +2,9 @@
 
 namespace Civi\Balonmano\Features\Jornada;
 
+use Civi\Balonmano\Features\Competicion\Competicion;
 use Civi\Balonmano\Features\Fase\Fase;
+use Civi\Balonmano\Features\Temporada\Temporada;
 use Civi\Balonmano\Features\Territorial\Territorial;
 
 class Jornada
@@ -20,6 +22,16 @@ class Jornada
         public readonly string $label,
         public readonly Fase $fase
     ) {
+    }
+
+    public function competicion(): Competicion
+    {
+        return $this->fase->competicion;
+    }
+
+    public function temporada(): Temporada
+    {
+        return $this->fase->temporada();
     }
 
     public function territorial(): Territorial

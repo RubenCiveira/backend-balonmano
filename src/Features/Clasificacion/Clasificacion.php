@@ -12,7 +12,7 @@ class Clasificacion
         return new Clasificacion(
             $data['code'],
             $data['label'],
-            Jornada::from($data['jornada']),
+            // Jornada::from($data['jornada']),
             Equipo::from($data['equipo']),
             $data['posicion'],
             $data['puntos'],
@@ -28,7 +28,6 @@ class Clasificacion
     public function __construct(
         public readonly string $code,
         public readonly string $label,
-        public readonly Jornada $jornada,
         public readonly Equipo $equipo,
         public readonly int $posicion,
         public readonly int $puntos,
@@ -43,6 +42,6 @@ class Clasificacion
 
     public function uid()
     {
-        return $this->jornada->uid() . "_" . $this->code;
+        return $this->code;
     }
 }

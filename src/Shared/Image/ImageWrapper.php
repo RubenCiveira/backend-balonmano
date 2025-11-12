@@ -31,12 +31,17 @@ class ImageWrapper
     {
         // 1) Decodificar y validar la URL
         $url = base64_decode($args['image'] ?? '', true);
-        if (!$url || !str_starts_with($url, 'http://balonmano.isquad.es/')) {
+        if (!$url || 
+                (!str_starts_with($url, '//balonmano.isquad.es/')
+                && !str_starts_with($url, 'http://balonmano.isquad.es/')) ) {
             throw new InvalidArgumentException('URL '.$url.' no permitida');
         }
         $parts = parse_url($url);
-        if (($parts['scheme'] ?? '') !== 'http' || ($parts['host'] ?? '') !== 'balonmano.isquad.es') {
+        if ( ($parts['host'] ?? '') !== 'balonmano.isquad.es') {
             throw new InvalidArgumentException('Host '.$parts['host'].' no permitido');
+        }
+        if( !($parts['scheme'] ?? '' )) {
+            $url = 'http:' . $url;
         }
 
         // 2) Descargar la imagen con timeout y UA

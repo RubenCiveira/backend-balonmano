@@ -15,6 +15,7 @@ use Civi\Balonmano\Features\Clasificacion\ClasificacionApi;
 use Civi\Balonmano\Features\Clasificacion\ClasificacionRepository;
 use Civi\Balonmano\Features\Competicion\CompeticionApi;
 use Civi\Balonmano\Features\Competicion\CompeticionRepository;
+use Civi\Balonmano\Features\Equipo\EquipoApi;
 use Civi\Balonmano\Features\Fase\FaseApi;
 use Civi\Balonmano\Features\Fase\FaseRepository;
 use Civi\Balonmano\Features\Jornada\JornadaApi;
@@ -104,6 +105,7 @@ FaseApi::register($app);
 JornadaApi::register($app);
 PartidoApi::register($app);
 ClasificacionApi::register($app);
+EquipoApi::register($app);
 
 $app->options('/{routes:.+}', function ($request, $response, $args) {
     return $response;
